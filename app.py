@@ -64,21 +64,25 @@ def aanmelden():
     if not email:
         return redirect('/')
 
+    # Haal bestaande aanvragen van deze gebruiker op
+    conn = sqlite3.connect('aanmeldingen.db')
+    c = conn.cursor()
+    c.execute('SELECT datum, status FROM aanmeldingen WHERE email=?', (email,))
+    rows = c.fetchall()
+    bestaande = {datum: status for datum, status in rows}
+
     if request.method == 'POST':
         datums_raw = request.form.get('datums', '')
         geselecteerde_dagen = [d.strip() for d in datums_raw.split(',') if d.strip()]
         aangemaakt_op = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
-        # Alleen toekomstige weken toestaan vanaf volgende maandag
         vandaag = datetime.today()
         volgende_maandag = vandaag + timedelta(days=(7 - vandaag.weekday()))
 
-        conn = sqlite3.connect('aanmeldingen.db')
-        c = conn.cursor()
         for datum in geselecteerde_dagen:
             try:
                 datum_dt = datetime.strptime(datum, '%Y-%m-%d')
-                if datum_dt >= volgende_maandag:
+                if datum_dt >= volgende_maandag and datum not in bestaande:
                     c.execute('''INSERT INTO aanmeldingen (email, datum, aangemaakt_op)
                                  VALUES (?, ?, ?)''', (email, datum, aangemaakt_op))
             except ValueError:
@@ -90,7 +94,8 @@ def aanmelden():
 
         return redirect('/mijn-aanmeldingen')
 
-    return render_template('aanmelden.html', email=email)
+    conn.close()
+    return render_template('aanmelden.html', email=email, bestaande=bestaande)
 
 # === STAP 3: OVERZICHT EIGEN AANMELDINGEN ===
 @app.route('/mijn-aanmeldingen')
