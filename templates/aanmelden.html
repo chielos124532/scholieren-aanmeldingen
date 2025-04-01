@@ -50,6 +50,7 @@
         minDate: volgendeMaandag,
         disable: disabledDates,
         onDayCreate: function(dObj, dStr, fp, dayElem) {
+            if (!dayElem.dateObj) return;
             const date = dayElem.dateObj.toISOString().split('T')[0];
             const status = statusData[date];
             if (status === 'open') dayElem.classList.add('status-pending');
