@@ -64,9 +64,9 @@ def aanmelden():
     if not email:
         return redirect('/')
 
-    email = email.lower()  # nogmaals zekerheid
+    email = email.lower()
 
-    # Haal bestaande aanvragen van deze gebruiker op (case-insensitive)
+    # Haal bestaande aanvragen van deze gebruiker op
     conn = sqlite3.connect('aanmeldingen.db')
     c = conn.cursor()
     c.execute('SELECT datum, status FROM aanmeldingen WHERE LOWER(email)=?', (email,))
@@ -79,14 +79,15 @@ def aanmelden():
         aangemaakt_op = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
 
         vandaag = datetime.today()
-        volgende_maandag = vandaag + timedelta(days=(7 - vandaag.weekday()))
+        huidige_maandag = vandaag - timedelta(days=vandaag.weekday())
 
         for datum in geselecteerde_dagen:
             try:
                 datum_dt = datetime.strptime(datum, '%Y-%m-%d')
-                if datum_dt >= volgende_maandag and datum not in bestaande:
+                datum_str = datum_dt.strftime('%Y-%m-%d')
+                if datum_dt >= huidige_maandag and datum_str not in bestaande:
                     c.execute('''INSERT INTO aanmeldingen (email, datum, aangemaakt_op)
-                                 VALUES (?, ?, ?)''', (email, datum, aangemaakt_op))
+                                 VALUES (?, ?, ?)''', (email, datum_str, aangemaakt_op))
             except ValueError:
                 continue
         conn.commit()
