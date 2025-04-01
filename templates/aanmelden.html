@@ -19,6 +19,10 @@
             background-color: crimson;
             color: white;
         }
+        .flatpickr-day[data-unselectable] {
+            pointer-events: none;
+            opacity: 0.5;
+        }
     </style>
 </head>
 <body class="bg-light">
@@ -37,7 +41,6 @@
 
 <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
 <script>
-    const disabledDates = {{ bestaande.keys() | list | tojson }};
     const statusData = {{ bestaande | tojson }};
 
     const vandaag = new Date();
@@ -48,7 +51,6 @@
         mode: "multiple",
         dateFormat: "Y-m-d",
         minDate: volgendeMaandag,
-        disable: disabledDates,
         onDayCreate: function(dObj, dStr, fp, dayElem) {
             if (!dayElem.dateObj) return;
             const date = dayElem.dateObj.toISOString().split('T')[0];
@@ -56,6 +58,16 @@
             if (status === 'open') dayElem.classList.add('status-pending');
             else if (status === 'goedgekeurd') dayElem.classList.add('status-goedgekeurd');
             else if (status === 'afgekeurd') dayElem.classList.add('status-afgekeurd');
+
+            // Blokkeer selecteerbaarheid voor bestaande aanvragen
+            if (status) dayElem.setAttribute('data-unselectable', 'true');
+        },
+        onChange: function(selectedDates, dateStr, instance) {
+            const cleaned = selectedDates.filter(d => {
+                const date = d.toISOString().split('T')[0];
+                return !statusData[date];
+            });
+            instance.setDate(cleaned, true);
         },
         locale: {
             firstDayOfWeek: 1
