@@ -18,7 +18,7 @@ def init_db():
     c.execute('''
         CREATE TABLE IF NOT EXISTS aanmeldingen (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            email TEXT NOT NULL,
+            email TEXT NOT NULL COLLATE NOCASE,
             datum TEXT NOT NULL,
             status TEXT DEFAULT 'open',
             aangemaakt_op TEXT
@@ -51,7 +51,7 @@ def stuur_bevestiging_email(email, datums):
 @app.route('/', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        email = request.form['email']
+        email = request.form['email'].strip().lower()
         session['email'] = email
         return redirect('/aanmelden')
     return render_template('login.html')
@@ -64,10 +64,12 @@ def aanmelden():
     if not email:
         return redirect('/')
 
-    # Haal bestaande aanvragen van deze gebruiker op
+    email = email.lower()  # nogmaals zekerheid
+
+    # Haal bestaande aanvragen van deze gebruiker op (case-insensitive)
     conn = sqlite3.connect('aanmeldingen.db')
     c = conn.cursor()
-    c.execute('SELECT datum, status FROM aanmeldingen WHERE email=?', (email,))
+    c.execute('SELECT datum, status FROM aanmeldingen WHERE LOWER(email)=?', (email,))
     rows = c.fetchall()
     bestaande = {datum: status for datum, status in rows}
 
@@ -104,9 +106,10 @@ def mijn_aanmeldingen():
     if not email:
         return redirect('/')
 
+    email = email.lower()
     conn = sqlite3.connect('aanmeldingen.db')
     c = conn.cursor()
-    c.execute('SELECT datum, status FROM aanmeldingen WHERE email=? ORDER BY datum', (email,))
+    c.execute('SELECT datum, status FROM aanmeldingen WHERE LOWER(email)=? ORDER BY datum', (email,))
     rows = c.fetchall()
     conn.close()
 
