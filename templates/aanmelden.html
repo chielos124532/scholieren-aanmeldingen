@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title>Beschikbaarheid doorgeven</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
 </head>
 <body class="bg-light">
 <div class="container py-5">
@@ -12,20 +13,29 @@
     <p class="text-center">Ingelogd als: <strong>{{ email }}</strong></p>
 
     <form method="POST" class="text-center">
-        <div class="row justify-content-center">
-            {% for dag in weekdagen %}
-                <div class="col-6 col-sm-4 col-md-3 mb-3">
-                    <div class="form-check">
-                        <input class="form-check-input" type="checkbox" name="datums" value="{{ dag }}" id="dag{{ loop.index }}">
-                        <label class="form-check-label" for="dag{{ loop.index }}">
-                            {{ dag }}
-                        </label>
-                    </div>
-                </div>
-            {% endfor %}
+        <div class="mb-3">
+            <label for="datums" class="form-label">Selecteer één of meerdere dagen:</label>
+            <input type="text" id="datums" name="datums" class="form-control text-center" placeholder="Klik om te kiezen" required>
         </div>
         <button type="submit" class="btn btn-success mt-3">✅ Verstuur aanmelding</button>
     </form>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+    const today = new Date();
+    const day = today.getDay();
+    const nextMonday = new Date(today);
+    nextMonday.setDate(today.getDate() + (8 - day)); // maandag volgende week
+
+    flatpickr("#datums", {
+        mode: "multiple",
+        dateFormat: "Y-m-d",
+        minDate: nextMonday, // blokkeer deze week
+        locale: {
+            firstDayOfWeek: 1 // maandag als eerste dag
+        }
+    });
+</script>
 </body>
 </html>
